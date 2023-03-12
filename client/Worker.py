@@ -12,9 +12,11 @@ from Model import Model
 class Worker:
     truffle_file = json.load(open('./build/contracts/FLTask.json'))
     
-    def __init__(self, fspath, device, num_workers, idx, topk, key, is_evil):
+    def __init__(self, ipfs_path, device, num_workers, idx, topk, key, is_evil):
         self.bcc = BCCommunicator()
-        self.fsc = FSCommunicator(fspath, device)
+        self.fsc = FSCommunicator(ipfs_path, device)
+        
+
         model, opt = self.fsc.fetch_initial_model()
         self.is_evil = is_evil
         
@@ -28,7 +30,9 @@ class Worker:
         except:
             pass
         opt = class_(model.parameters(), **(copy))
+        # print("opt",opt)
         self.model = Model(num_workers, idx, model, opt, device, topk, is_evil)
+        # print("model value",self.model)
         self.idx = idx
         self.num_workers = num_workers
 
@@ -45,8 +49,10 @@ class Worker:
     def train(self, round):
         # train
         cur_state_dict = self.model.train()
+        print("CUR",cur_state_dict)
         # push to file system
-        self.fsc.push_model(cur_state_dict, self.idx, round)    
+        self.fsc.push_model(cur_state_dict, self.idx, round)  
+        print("Model push update:",self.fsc.push_model(cur_state_dict,self.idx,round))
     
     def evaluate(self, round):
         # retrieve all models of the other workers
@@ -88,4 +94,4 @@ class Worker:
     def get_round_number(self):
         return self.contract_instance.functions.getRound().call()
 
-        
+       
