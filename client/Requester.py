@@ -39,6 +39,8 @@ class Requester:
 
     def init_task(self, deposit, model_uri, num_rounds):
         contract_instance = self.w3.eth.contract(abi=self.truffle_file['abi'], address=self.contract_address)
+        # print("Chal ra")
+        print(deposit,model_uri,num_rounds)
 
         tx = contract_instance.functions.initializeTask(model_uri, num_rounds).buildTransaction({
             "gasPrice": self.w3.eth.gas_price, 

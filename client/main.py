@@ -19,7 +19,7 @@ if __name__ == '__main__':
     # add the model file to IPFS
     # res = client.get(QmdzVYP8EqpK8CvH7aEAxxms2nCRNc98fTFL2cSiiRbHxn)
 
-    # get the IPFS hash of the added file
+    # get the IPFS Folder hash to the added file
     ipfs_hash = "QmdzVYP8EqpK8CvH7aEAxxms2nCRNc98fTFL2cSiiRbHxn"
 
     print(f"IPFS hash: {ipfs_hash}")

@@ -2,6 +2,7 @@ import torch
 import ipfshttpclient
 import os
 import io
+import shutil
 
 
 class FSCommunicator:
@@ -35,30 +36,82 @@ class FSCommunicator:
         return model, optimizer
 
     def fetch_evaluation_models(self, worker_index, round, num_workers):
+        print("Fetch Function")
         state_dicts = []
         for i in range(num_workers):
             if i != worker_index:
                 model_hash = self.client.ls(
-                    self.ipfs_path + 'model_round_{}_index_{}.pt'.format(round, i))['Hash']
+                     'model_round_{}_index_{}.pt'.format(round, i))[1]
                 model_bytes = self.client.cat(model_hash)
                 print(model_hash)
                 state_dicts.append(torch.load(io.BytesIO(
                     model_bytes), map_location=self.DEVICE))
         print("Fetching")
         return state_dicts
-
+    
     def push_model(self, state_dict, worker_index, round):
-        # Save the state_dict to a buffer
-        buffer = io.BytesIO()
-        torch.save(state_dict, 'model')
+    # Save the state_dict to a file
+        print("Pushing Model")
+        model_filename = 'model_round_{}_index_{}.pt'.format(round, worker_index)
+        torch.save(state_dict, model_filename)
 
-        # Add the buffer to IPFS and get the new hash
-        # model_bytes = buffer.getvalue()
-        # print(model_bytes)
-        # model_hash = self.client.add_bytes(model_bytes)
-        # print("model_hash :", model_hash)
+    # Add the file to IPFS and get the new hash
+        model_has = self.client.add(model_filename, self.ipfs_path)
+        model_hash=model_has['Hash']
+        print("Model Hash:", model_hash)
 
-      # Rename the pinned file to include the worker index and round number
-        new_name = 'model_round_{}_index_{}.pt'.format(round, worker_index)
-        print("ipfs file path :", self.ipfs_path)
-        self.client.add('model.pt', self.ipfs_path + new_name)
+    # Remove the local file
+        os.remove(model_filename)
+
+
+
+    # def fetch_evaluation_models(self, worker_index, round, num_workers):
+    #     print("Fetch Function")
+    #     state_dicts = []
+    #     for i in range(num_workers):
+    #         if i != worker_index:
+    #             model_hash = self.client.ls(
+    #                 self.ipfs_path + 'model_round_{}_index_{}.pt'.format(round, i))[1]
+    #             model_bytes = self.client.cat(model_hash)
+    #             print(model_hash)
+    #             state_dicts.append(torch.load(io.BytesIO(
+    #                 model_bytes), map_location=self.DEVICE))
+    #     print("Fetching")
+    #     return state_dicts
+
+    # def push_model(self, state_dict, worker_index, round):
+    #     # Save the state_dict to a buffer
+    #     buffer = io.BytesIO()
+    #     torch.save(state_dict, 'model')
+
+    #     # Add the buffer to IPFS and get the new hash
+    #     # model_bytes = buffer.getvalue()
+    #     # print(model_bytes)
+    #     # model_hash = self.client.add_bytes(model_bytes)
+    #     # print("model_hash :", model_hash)
+
+    #   # Rename the pinned file to include the worker index and round number
+    #     # new_name = 'model_round_{}_index_{}.pt'.format(round, worker_index)
+    #     new_name = 'model_round_{}_index_{}.pt'.format(round, worker_index)
+    #     os.rename('model', new_name)
+    #     with open(new_name, 'rb') as f:
+    #         model_bytes = f.read()
+    #         model_hash = self.client.add_bytes(model_bytes)[1]
+    #         print("Model Hash :",model_hash)
+            
+        # print("ipfs file path :", self.ipfs_path)
+        # self.client.add('model.pt', self.ipfs_path + new_name)
+    # def push_model(self, state_dict, worker_index, round):
+    # # Save the state_dict to a buffer
+    #     buffer = io.BytesIO()
+    #     torch.save(state_dict, 'model')
+
+    # # Rename the file to include the worker index and round number
+    #     new_name = 'model_round_{}_index_{}.pt'.format(round, worker_index)
+    #     shutil.move('model', new_name)
+
+    # # Add the renamed file to IPFS and get the new hash
+    #     with open(new_name, 'rb') as f:
+    #         model_bytes = f.read()
+    #         model_hash = self.client.add_bytes(model_bytes)[1]
+    #         print("Model Hash:", model_hash)
