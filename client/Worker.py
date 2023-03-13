@@ -49,12 +49,13 @@ class Worker:
     def train(self, round):
         # train
         cur_state_dict = self.model.train()
-        print("CUR",cur_state_dict)
+        # print("CUR",cur_state_dict)
         # push to file system
         self.fsc.push_model(cur_state_dict, self.idx, round)  
-        print("Model push update:",self.fsc.push_model(cur_state_dict,self.idx,round))
+        # print("Model push update:",self.fsc.push_model(cur_state_dict,self.idx,round))
     
     def evaluate(self, round):
+        print("Evaluating")
         # retrieve all models of the other workers
         state_dicts = self.fsc.fetch_evaluation_models(self.idx, round, self.num_workers)
         

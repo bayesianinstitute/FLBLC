@@ -90,10 +90,15 @@ class Requester:
 
         self.init_score_matrix()
     
+   
     def push_scores(self, index_score_tuple):
         index = index_score_tuple[0]
         scores = index_score_tuple[1]
-        self.score_matrix[index] = np.array(scores)
+        print("Score type :",type(scores))
+        self.score_matrix[index] = np.resize(self.score_matrix[index], scores.shape)
+        self.score_matrix[index] = scores
+        # self.score_matrix[index] = np.reshape(scores)
+
 
     def get_score_matrix(self):
         return self.score_matrix
