@@ -51,7 +51,7 @@ class Worker:
         cur_state_dict = self.model.train()
         # print("CUR",cur_state_dict)
         # push to file system
-        self.fsc.push_model(cur_state_dict, self.idx, round)  
+        self.fsc.push_model(cur_state_dict, self.idx, round,self.num_workers)  
         # print("Model push update:",self.fsc.push_model(cur_state_dict,self.idx,round))
     
     def evaluate(self, round):

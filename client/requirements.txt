@@ -1,6 +1,6 @@
 numpy==1.22.3
 Pillow==9.1.0
-torch==1.13.1
+torch==1.12.0
 torchaudio==0.12.0
 torchvision==0.13.1
 typing-extensions==4.2.0
@@ -41,8 +41,6 @@ requests==2.27.1
 rlp==2.0.1
 six==1.16.0
 toolz==0.11.2
-torch==1.11.0
-torchvision==0.12.0
 typing_extensions==4.2.0
 urllib3==1.26.9
 varint==1.0.2

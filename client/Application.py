@@ -48,15 +48,17 @@ class Application:
         for round in range(self.num_rounds):
             for idx, worker in enumerate(self.workers):
                 worker.train(round)
-                print(worker.train)
+                # print(worker.train)
 
             # starting eval phase
             for idx, worker in enumerate(self.workers):
+                print("idx",idx)
                 avg_dicts, topK_dicts, unsorted_scores = worker.evaluate(round)
                 unsorted_scores = [score[0].cpu().item()
                                    for score in unsorted_scores]
                 unsorted_scores.insert(idx, -1)
                 unsorted_scores = (idx, unsorted_scores)
+                # print("unsorted scores :",unsorted_scores)
                 self.requester.push_scores(unsorted_scores)
                 worker.update_model(avg_dicts)
 

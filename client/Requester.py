@@ -1,6 +1,6 @@
 import json
 import math
-from turtle import shape
+# from turtle import shape
 import numpy as np
 from web3 import Web3, HTTPProvider
 
@@ -39,8 +39,6 @@ class Requester:
 
     def init_task(self, deposit, model_uri, num_rounds):
         contract_instance = self.w3.eth.contract(abi=self.truffle_file['abi'], address=self.contract_address)
-        # print("Chal ra")
-        print(deposit,model_uri,num_rounds)
 
         tx = contract_instance.functions.initializeTask(model_uri, num_rounds).buildTransaction({
             "gasPrice": self.w3.eth.gas_price, 
@@ -87,18 +85,17 @@ class Requester:
         signed_tx = self.w3.eth.account.signTransaction(tx, self.key)
         tx_hash = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
         tx_receipt = self.w3.eth.getTransactionReceipt(tx_hash)
-
+        
         self.init_score_matrix()
     
-   
     def push_scores(self, index_score_tuple):
+        print("Length of score index_tuple",len(index_score_tuple))
+        print("index_score ",index_score_tuple[0])
+        print("index_score ",index_score_tuple[1])
         index = index_score_tuple[0]
-        scores = index_score_tuple[1]
-        print("Score type :",type(scores))
-        self.score_matrix[index] = np.resize(self.score_matrix[index], scores.shape)
-        self.score_matrix[index] = scores
-        # self.score_matrix[index] = np.reshape(scores)
-
+        scores=index_score_tuple[1]
+        self.score_matrix[index] = np.array(scores)
+      
 
     def get_score_matrix(self):
         return self.score_matrix
@@ -115,6 +112,7 @@ class Requester:
         overall_scores = [] # overall scores
 
         scores = np.array(score_matrix)
+        print("scores",scores)
 
         #calculate median scores of each worker
         for i in range(num_workers):
@@ -143,7 +141,7 @@ class Requester:
 
         for i in range(num_workers):
             overall_scores.append(min(m_scaled[i], (d[i]/max_d))) # compute overall score as the minimum between m_scaled and d_scaled
-        
+        print(overall_scores)
         return overall_scores
 
     # given the array of addresses and their respective overall score, returns the ordered top k addresses
