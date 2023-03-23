@@ -1,6 +1,7 @@
 ## Setup
-Create a virtual environment and install the requirements.txt.
-Create a Ipfs running on local host
+a. Create a virtual environment and install the requirements.txt.
+
+b. Create a Ipfs running on local host
 
 ## Running
 The script is built to run on top of a Ganache testnet. It also requires Truffle to compile the smart contract.
