@@ -1,12 +1,17 @@
 ## Setup
 Create a virtual environment and install the requirements.txt.
+Create a Ipfs running on local host
 
 ## Running
 The script is built to run on top of a Ganache testnet. It also requires Truffle to compile the smart contract.
 
-Compile the smart contract running 
+Compile and migrate the smart contract running 
 ```
 truffle compile
+```
+
+```
+truffle migrate
 ```
 
 Create a `.env` file containing the private keys of requester and workers in the following format:
@@ -17,6 +22,7 @@ WORKER2_KEY=0x...
 WORKER3_KEY=0x...
 ...
 ```
+upload fs-sim folder on your local ipfs
 
 Run the following python command
 ```
