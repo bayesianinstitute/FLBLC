@@ -20,6 +20,7 @@ contract FLTask {
     struct Worker {
         bool registered;
         uint8 workerId;
+        
     }
 
     //struct representing the evaluation submitted by a worker at the end of the evaluation phase
@@ -28,6 +29,7 @@ contract FLTask {
         address[] addressScored;
         uint16[] scores;
         //uint16 score; //only for testing
+        
     }
 
     
@@ -35,12 +37,18 @@ contract FLTask {
     uint8 private round; //number of the actual round
     uint8 private numWorkers = 0;
     mapping(address => Worker) private workers; //to each worker address is associated his worker object
+    mapping(address => uint256) private workerDeposits;
+
     SubmittedEval[] private roundScores; //to each round are associated the submitted evaluations
     address[] private roundTopK;
     address public immutable requester;
     string private modelURI; //URI of the model pushed by the requester at initialization phase
     uint256 roundMoney;
     TaskStatus public taskStatus;
+    
+
+    // Penalty percentage to deduct from the worker's deposit (e.g., 10%)
+    uint256 private constant PENALTY_PERCENTAGE = 10;
 
     constructor() {
         requester = msg.sender;
@@ -123,21 +131,63 @@ contract FLTask {
         return modelURI;
     }
 
-    function joinTask() public taskInitialized returns (string memory) {
+    function joinTask() public payable taskInitialized returns (string memory) {
         require(!workers[msg.sender].registered, "Worker is already registered");
         require(msg.sender != requester, "Requester cannot be a worker!");
-        Worker memory worker;
-        worker.registered = true;
-        worker.workerId = numWorkers + 1;
-        workers[msg.sender] = worker;
+        require(msg.value == 5 ether, "Worker must deposit 5 ethers to join the task");
+
+        workers[msg.sender].registered = true;
+        workers[msg.sender].workerId = numWorkers + 1;
+        workerDeposits[msg.sender] = msg.value;
         numWorkers++;
         return modelURI;
     }
 
+
+
+  
     function removeWorker() public {
+        require(workers[msg.sender].registered, "Worker is not registered");
+        penalizeWorker(msg.sender);
         delete workers[msg.sender];
         numWorkers--;
     }
+
+    // Get the deposit amount of a worker
+    function getDepositEther(address workerAddress) public view returns (uint256) {
+        require(workerAddress != address(0), "Invalid worker address");
+        require(workers[workerAddress].registered, "Worker is not registered");
+
+        return workerDeposits[workerAddress];
+    }
+
+
+    function penalizeWorker(address workerAddress) public payable onlyRequester {
+        uint256 penaltyAmount = msg.value;
+        require(penaltyAmount <= address(this).balance, "Insufficient contract balance");
+
+        // Deduct the penalty amount from the worker's deposit
+        workerDeposits[workerAddress] -= penaltyAmount;
+
+        // Transfer the penalty amount to the requester's account
+        payable(requester).transfer(penaltyAmount);
+    }
+
+
+    function refundWorker(address workerAddress) public payable onlyRequester {
+        require(workers[workerAddress].registered, "Worker is not registered");
+
+        uint256 refundAmount = workerDeposits[workerAddress];
+        require(refundAmount > 0, "No deposit available for refund");
+
+        // Clear the worker's deposit
+        workerDeposits[workerAddress] = 0;
+
+        // Transfer the refund amount back to the worker
+        payable(workerAddress).transfer(refundAmount);
+    }
+
+
 
     function submitScore(address[] memory _workers, uint16[] memory _scores) public onlyWorker taskRunning {
         roundScores.push(SubmittedEval({

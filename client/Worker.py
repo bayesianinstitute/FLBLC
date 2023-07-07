@@ -50,8 +50,12 @@ class Worker:
         # train
         cur_state_dict = self.model.train()
         # print("CUR",cur_state_dict)
+       
         # push to file system
+       
+        #changes
         self.fsc.push_model(cur_state_dict, self.idx, round,self.num_workers)  
+
         # print("Model push update:",self.fsc.push_model(cur_state_dict,self.idx,round))
     
     def evaluate(self, round):
@@ -77,14 +81,15 @@ class Worker:
     def join_task(self, contract_address):
         self.contract_address = contract_address
         self.contract_instance = self.w3.eth.contract(abi=self.truffle_file['abi'], address=contract_address)
-
+        deposit = 5000000000000000000  # 5 ethers (in wei)
         tx = self.contract_instance.functions.joinTask().buildTransaction({
-            "gasPrice": self.w3.eth.gas_price, 
-            "chainId": 1337, 
-            "from": self.account.address, 
+            "gasPrice": self.w3.eth.gas_price,
+            "chainId": 1337,
+            "from": self.account.address,
+            "value": deposit,
             'nonce': self.w3.eth.getTransactionCount(self.account.address)
         })
-        #Get tx receipt to get contract address
+        # Get tx receipt to get contract address
         signed_tx = self.w3.eth.account.signTransaction(tx, self.key)
         tx_hash = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
         tx_receipt = self.w3.eth.getTransactionReceipt(tx_hash)

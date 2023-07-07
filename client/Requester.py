@@ -23,7 +23,7 @@ class Requester:
         construct_txn = self.contract.constructor().buildTransaction({
             'from': self.account.address,
             'nonce': self.w3.eth.getTransactionCount(self.account.address),
-            'gas': 2508712,
+            'gas': 5000000,
             'gasPrice': self.w3.toWei('21', 'gwei')
         })
 
@@ -139,9 +139,12 @@ class Requester:
 
         max_d = np.array(d).max() # maximum value of least accurate evaluations used for scaling
 
+
         for i in range(num_workers):
-            overall_scores.append(min(m_scaled[i], (d[i]/max_d))) # compute overall score as the minimum between m_scaled and d_scaled
-        print(overall_scores)
+            score = min(m_scaled[i], (d[i] / max_d))  # compute overall score as the minimum between m_scaled and d_scaled
+            overall_scores.append(score)
+
+        print("Overall Scores: ",overall_scores)
         return overall_scores
 
     # given the array of addresses and their respective overall score, returns the ordered top k addresses
@@ -157,8 +160,27 @@ class Requester:
             top_k.append(temp_addresses[index])
             temp_scores = np.delete(temp_scores, index)
             temp_addresses = np.delete(temp_addresses, index)
-
+       
         return top_k
+    
+    def find_bad_workers(self, addresses, scores):
+        temp_addresses = np.array(addresses)
+        temp_scores = np.array(scores)
+
+        bad_workers = []
+
+        while len(temp_scores) > 0:
+            index = np.where(temp_scores < 0.7)[0]  # Find indices of scores below 0.7
+            if len(index) == 0:
+                break
+            min_index = index[0]  # Find the first occurrence of score below 0.7
+            bad_workers.append(temp_addresses[min_index])
+            temp_scores = np.delete(temp_scores, min_index)
+            temp_addresses = np.delete(temp_addresses, min_index)
+
+        return bad_workers
+
+
 
     def submit_top_k(self, top_k):
         self.contract_instance = self.w3.eth.contract(abi=self.truffle_file['abi'], address=self.contract_address)
@@ -188,4 +210,69 @@ class Requester:
         tx_hash = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
         tx_receipt = self.w3.eth.getTransactionReceipt(tx_hash)
         
+    def penalize_worker(self, worker_addresses):
+        contract_instance = self.w3.eth.contract(abi=self.truffle_file['abi'], address=self.contract_address)
+        penalty_percentage = 70  # Increase the penalty percentage to 20%
         
+        for worker_address in worker_addresses:
+            # Retrieve the worker's deposit amount in ether from the contract
+            deposit_ether = self.contract_instance.functions.getDepositEther(worker_address).call()
+            print(f"Worker {worker_address} deposited in ether: {deposit_ether}")
+            # Calculate the penalty amount (e.g., 10% of the deposit in ether)
+            penalty_ether = (deposit_ether * penalty_percentage) // 100
+            print(f"Worker {worker_address} will be penalized for {penalty_ether} ether")
+
+            tx = self.contract_instance.functions.penalizeWorker(worker_address).buildTransaction({
+                "gasPrice": self.w3.eth.gas_price,
+                "chainId": 1337,
+                "from": self.account.address,
+                "value": penalty_ether,
+                'nonce': self.w3.eth.getTransactionCount(self.account.address)
+            })
+
+            signed_tx = self.w3.eth.account.signTransaction(tx, self.key)
+            tx_hash = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+            tx_receipt = self.w3.eth.getTransactionReceipt(tx_hash)
+
+            # Check the new deposit amount after penalty
+            new_deposit_ether = self.contract_instance.functions.getDepositEther(worker_address).call()
+            print(f"New deposit amount for Worker {worker_address} after penalty: {new_deposit_ether}")
+
+
+  
+    def refund_worker(self, worker_addresses):
+        contract_instance = self.w3.eth.contract(abi=self.truffle_file['abi'], address=self.contract_address)
+
+        for worker_address in worker_addresses:
+            # Retrieve the worker's deposit amount in ether from the contract
+            deposit_ether = self.contract_instance.functions.getDepositEther(worker_address).call()
+            print(f"Worker {worker_address} refund back to the contract: {deposit_ether}")
+
+            # Refund the worker's deposit amount
+            tx = self.contract_instance.functions.refundWorker(worker_address).buildTransaction({
+                "gasPrice": self.w3.eth.gas_price,
+                "chainId": 1337,
+                "from": self.account.address,
+                'nonce': self.w3.eth.getTransactionCount(self.account.address)
+            })
+
+            signed_tx = self.w3.eth.account.signTransaction(tx, self.key)
+            tx_hash = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+            tx_receipt = self.w3.eth.getTransactionReceipt(tx_hash)
+
+
+
+
+    def remove_worker(self, worker_address):
+        contract_instance = self.w3.eth.contract(abi=self.truffle_file['abi'], address=self.contract_address)
+
+        tx = contract_instance.functions.removeWorker(worker_address).buildTransaction({
+            "gasPrice": self.w3.eth.gas_price,
+            "chainId": 1337,
+            "from": self.account.address,
+            'nonce': self.w3.eth.getTransactionCount(self.account.address)
+        })
+
+        signed_tx = self.w3.eth.account.signTransaction(tx, self.key)
+        tx_hash = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+        tx_receipt = self.w3.eth.getTransactionReceipt(tx_hash)

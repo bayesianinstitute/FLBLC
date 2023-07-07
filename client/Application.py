@@ -31,6 +31,7 @@ class Application:
         self.requester = Requester(os.getenv('REQUESTER_KEY'))
         self.requester.deploy_contract()
         self.requester.init_task(10000000000000000000, self.fspath, self.num_rounds)
+
         print("Task initialized")
        
 
@@ -41,6 +42,7 @@ class Application:
         for i in range(self.num_workers):
             self.workers.append(Worker(self.fspath, self.DEVICE, self.num_workers, i, 3, os.getenv('WORKER' + str(i+1) + '_KEY'), i < self.num_evil))
             self.worker_dict[i] = self.workers[i].account.address
+            print("Account address: ", self.worker_dict[i])
             self.workers[i].join_task(self.requester.get_contract_address())
 
         self.requester.start_task()
@@ -66,7 +68,18 @@ class Application:
                 self.requester.get_score_matrix(), self.num_workers)
             round_top_k = self.requester.compute_top_k(
                 list(self.worker_dict.values()), overall_scores)
+            
+            penalize = self.requester.find_bad_workers(
+                list(self.worker_dict.values()), overall_scores)
+            print("penalize :", penalize)
+            self.requester.penalize_worker(penalize)
+            self.requester.refund_worker(list(self.worker_dict.values()))
+
+            
+            
             self.requester.submit_top_k(round_top_k)
+            
             self.requester.distribute_rewards()
             print("Distributed rewards. Next round starting soon...")
+
             self.requester.next_round()
