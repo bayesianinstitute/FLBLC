@@ -1,7 +1,7 @@
 ## Setup
 a. Create a virtual environment and install the requirements.txt.
 
-b. Install  Ipfs 
+b. Install  Ipfs .
 
 ## Running
 The script is built to run on top of a Ganache testnet. It also requires Truffle to compile the smart contract.
@@ -17,8 +17,6 @@ The script is built to run on top of a Ganache testnet. It also requires Truffle
   - Enable Autogenerate HD Mnemonic
 
 2. IPFS
-
-
 
 - Fire up your terminal and run `ipfs init`
 - Then run
