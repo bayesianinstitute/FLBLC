@@ -1,7 +1,6 @@
 # DiscoFL
 Distributed Incentive System for Cooperatively Orchestrated FL
 
-This project was developed during the Decentralized Systems course attended at the Universitat Politecnica de Catalunya (UPC). 
 
 ## Authors
 - [Faijan Khan](https://github.com/Faizack)
